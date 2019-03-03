@@ -24,7 +24,7 @@
 
 //ADC paramter list
 #define left_lever_min_adc_value 60
-#define left_left_max_adc_value 100
+#define left_lever_max_adc_value 100
 #define right_lever_min_adc_value 120
 #define right_lever_max_adc_value 150
 #define both_lever_min_adc_value 180
@@ -70,7 +70,7 @@ void read_lever (){
 	if(AD_Result > both_lever_min_adc_value){
 		lever = both_levers;		
 	}
-	else if (AD_Result >= left_lever_min_adc_value && AD_Result <= left_left_max_adc_value){
+	else if (AD_Result >= left_lever_min_adc_value && AD_Result <= left_lever_max_adc_value){
 		lever = left_lever;
 	}
 	else if (AD_Result >= right_lever_min_adc_value && AD_Result <= right_lever_max_adc_value)
