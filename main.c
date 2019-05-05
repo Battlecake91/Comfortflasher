@@ -30,8 +30,8 @@
 #define both_lever_min_adc_value 150
 
 //Time parameter list in 10ms p.u.
-#define time_out 42				//Don't forget: It takes 80ms for the CPU to start
-#define blink_time 300
+#define time_out 55				//Don't forget: It takes 80ms for the CPU to start
+#define blink_time 160
 
 //Variables
 volatile uint16_t counter = 0;
