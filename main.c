@@ -1,67 +1,60 @@
-/*
- * Comfortflasher V1.0b
- * Firmware for Comfortflasher Module M1
- * Created: 04.02.2017 01:18:23
+/*/*
+ * Comfortblink_ATTiny13A.c
+ * Version V1.1b
  * Author : Steven Tzschentke (aka Kampfkuchen)
  * Initiated in 626ge.nufag.de board for Mazda 626 GE
  * Thread: http://www.626ge.de/viewtopic.php?f=17&t=5663
  */ 
 
-#include <avr/interrupt.h>
+#define F_CPU 9600000UL
 
-// define CPU speed - actual speed is set using CLKPSR in main()
-#define F_CPU 8000000UL
+#define lever_mask 0x0C
+#define feedback_pin 0x10
 
-//Defines
+#define left 0x01
+#define right 0x02
+#define both 0x03
 #define no_lever 0x00
-#define right_lever 0x01
-#define left_lever 0x02
-#define both_levers 0x03
-#define set 0x04
-#define activated 1
-#define deactivated 0
-#define reset 0
 
-//ADC paramter list
-#define left_lever_min_adc_value 55
-#define left_lever_max_adc_value 90
-#define right_lever_min_adc_value 95
-#define right_lever_max_adc_value 125
-#define both_lever_min_adc_value 150
+#define active 1
 
-//Time parameter list in 10ms p.u.
-#define time_out 55				//Don't forget: It takes 80ms for the CPU to start
-#define blink_time 160
+#define time_in 40
+#define time_out 300
+#define time_out_Feedback 1000
+#define time_out_both 700
 
-//Variables
+#include <avr/io.h>
+#include <avr/eeprom.h>
+#include <avr/interrupt.h>
+#include <stdint.h>                            
+
 volatile uint16_t counter = 0;
+uint8_t detect_count = 0;
 uint8_t lever = 0;
+uint8_t Feedback = 0;
+uint8_t Feedback_last = 0;
+uint8_t Feedback_count = 0;
+uint8_t Feedback_count_last = 0;
 uint8_t state = 0;
 uint8_t comfort = 0;
-uint8_t detect_count = 0;
+uint8_t cycles = 0;
+uint16_t counter_last_check = 0;
+uint16_t both_counter = 0;
+uint16_t time_last_Feedback = 0;
 
-void setup(){
-		// Set CPU Clock
-		CCP = 0xD8;				//Set CCP with correct signature
-		CLKMSR = 0x00;			//Set internal 8MHz
-		CLKPSR = 0x00;			//Set CPU Clock Prescaler: 0000 (8000000Hz / 1)
-				
-		DIDR0  = 0x04;			//Deactivate digital Memory on PB2 to save energy
-		DDRB  = 0x03;			//PB0+1 as outputs
-		
-		//Set CTC value (1222), calibrated with oscilloscope to 10ms per cycle
-		OCR0AH = 0x04;
-		OCR0AL = 0xC6;
-		
-		//Configure Timer0
-		TCCR0B = (1<<CS01) | (1<<WGM02); //Set prescaler to 8 and CTC mode
-		TIMSK0 |= (1<<OCIE0A);	//Activate CTC mode
 
-		ADCSRB = 0x00;			//Activate Freerun for ADC
-		ADMUX  = 0x02;			//Set ADC Multiplexer to to PB2
-		ADCSRA = 0xE6;			//Set ADC operation-mode and prescaler
-		sei();					//activate global interrupts
-		
+ISR (TIM0_COMPA_vect)
+{
+	counter++;
+
+}
+
+void setup_cycles(){
+	
+	if (Feedback_count > 2 )
+	{
+		eeprom_update_byte((uint8_t*)16, Feedback_count);
+	}
 }
 
 void stop_program(){
@@ -72,100 +65,125 @@ void stop_program(){
 
 }
 
-
-void read_lever (){
+void get_inputs(){
 	
-	uint8_t AD_Result = ADCL;
-	if (AD_Result < left_lever_min_adc_value)
-	{
-		lever = no_lever;
-	}
-	else if (AD_Result >= left_lever_min_adc_value && AD_Result <= left_lever_max_adc_value){
-		lever = left_lever;
-		detect_count++;
-	}
-	else if (AD_Result >= right_lever_min_adc_value && AD_Result <= right_lever_max_adc_value)
-	{
-		lever = right_lever;
-		detect_count++;
-	}
-	else if(AD_Result > both_lever_min_adc_value){
-		lever = both_levers;
-	}
+	//Eingänge in Variable schreiben
+	//dann linker/rechter Hebel in _eine_ Variable schreiben und um zwei Bit verschieben (Bit 3 auf Bit 1 und Bit 2 auf Bit 0)
+	//Für Feedback eigene Variable nutzen
 	
-}
-
-ISR (TIM0_COMPA_vect)
-{
-	counter++;
+	uint8_t input = PINB;
+		
+	lever = input & lever_mask;
+	lever = lever >> 2;
+	
+	Feedback = input & feedback_pin;
+	Feedback = Feedback >> 4;
+	detect_count++;
 }
 
 int main(void)
 {
-	//Start setup first
-	setup();
-	//Do one cycle nothing, so the ADC can warmup
-	while(counter < 1);
+ 
+    DDRB = 0x03;						//PB0 and PB1 as output
 	
-    while (1) 
+	TCCR0A = (1<<WGM01);				//Set Mode to CTC mode
+	TCCR0B = (1<<CS01) | (1<<CS00);		//Set Prescaler to 64
+	
+	OCR0A  = 17;						//Set CTC value (17) for 1kHz rate, 1ms period time
+	
+	TIMSK0 = (1<<OCIE0A);				//Enable Interrupt at CTC value from OCR0A
+	
+	sei();
+	//Lese Blinkzyklen aus EEPROM 
+	cycles = eeprom_read_byte((uint8_t*)16);
+	
+		
+	while (1) 
     {
 
-		//Read ADC values and set lever-state
-		read_lever();
+		get_inputs();
+		
+		//Anti-bounce: only check after 2ms if feedback signal has changed
+		if(counter - counter_last_check > 2){
+			//check if the signal has a falling edge
+			if (Feedback != Feedback_last && !Feedback)
+			{
+				//increment the counter if a falling edge was detected
+				Feedback_count++;
+				//save the last counter-state for the last feedback-edge
+				time_last_Feedback = counter;
 				
-		//Switch to the case for the lever-state
-		switch (lever) 
-		{
-			case no_lever:				//no lever is set
-				
-				//check if the lever was released in time and was not hold too long
-				PORTB = state;			//Set output from the last known lever state
-				comfort = activated;	//member the comfort-state
-				counter = reset;		//reset the counter for the blink-cycle
-				break;
-				
-			case right_lever:
-				
-				//Only the first known state changes the state value
-				if (detect_count == 1)
-				{
-					state = right_lever;		//hold the lever-state
-				}
-				
-				break;
-				
-			case left_lever:
-				
-				//Only the first known state changes the state value
-				if (detect_count == 1)
-				{
-					state = left_lever;			//hold the lever-state
-				}
-				
-				break;
-			
-			case both_levers:
-				//Stop the program immediately
+			//Check if the last feedback was too long ago
+			}else if(counter - time_last_Feedback > time_out_Feedback){
 				stop_program();
-				break;		
-			
-		}
-	
-		//if comfort is activated check the time
-		//and release the output after blink_time
-		if (comfort)
-		{
-			if (counter >= blink_time)
+			}
+			if (!comfort && counter >= time_out)
 			{
 				stop_program();
 			}
-		}else if(counter >= time_out){
-			stop_program();
+			
+			Feedback_last = Feedback;
+			counter_last_check = counter;
+		}
+		switch (lever)
+		{
+			case no_lever:				//no lever is set
 				
+				if(!comfort && counter >= time_in){
+					//check if the lever was released in time and was not hold too long
+					PORTB = state;			//Set output from the last known lever state
+					comfort = active;		//member the comfort-state
+					counter = 0;			//reset the counter for the blink-cycle
+				}
+				break;
+			
+			case right:
+				
+				//Only the first known state changes the state value
+				if (detect_count == 1)
+				{
+					state = right;		//hold the lever-state	
+					both_counter = 0;
+				}
+				
+				
+				break;
+					
+			case left:
+					
+				//Only the first known state changes the state value
+				if (detect_count == 1)
+				{
+					state = left;			//hold the lever-state
+					both_counter = 0;
+				}
+				
+				break;
+					
+			case both:
+				
+				if (comfort)
+				{
+					//Stop the program if both lever are detected for specific times
+					both_counter++;
+					if (both_counter > time_out_both)
+					{
+						stop_program();
+					}
+					
+				}else{
+					//If both levers detected and no comfort-mode, setup cycles
+					setup_cycles();
+				}
+				break;
+				
+			}
+		
+		if (Feedback_count >= cycles && comfort)
+		{
+			//stop after saved times of feedbacks
+			stop_program();
 		}
 	}
-		
 }
-
-
 
