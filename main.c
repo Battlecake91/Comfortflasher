@@ -1,9 +1,12 @@
 /*/*
  * Comfortblink_ATTiny13A.c
- * Version V1.1b
+ * Version V1.2b
  * Author : Steven Tzschentke (aka Kampfkuchen)
  * Initiated in 626ge.nufag.de board for Mazda 626 GE
  * Thread: http://www.626ge.de/viewtopic.php?f=17&t=5663
+ * Changes:
+ * V1.2b: fixed cycle-setup at normal blinking 
+ * adding time-out
  */ 
 
 #define F_CPU 9600000UL
@@ -41,6 +44,7 @@ uint8_t cycles = 0;
 uint16_t counter_last_check = 0;
 uint16_t both_counter = 0;
 uint16_t time_last_Feedback = 0;
+uint8_t first_detection = 0;
 
 
 ISR (TIM0_COMPA_vect)
@@ -67,14 +71,18 @@ void stop_program(){
 
 void get_inputs(){
 	
-	//Eingänge in Variable schreiben
-	//dann linker/rechter Hebel in _eine_ Variable schreiben und um zwei Bit verschieben (Bit 3 auf Bit 1 und Bit 2 auf Bit 0)
-	//Für Feedback eigene Variable nutzen
+	//Writing input in variable
+	//and shifting bits to the right
 	
 	uint8_t input = PINB;
 		
 	lever = input & lever_mask;
 	lever = lever >> 2;
+	
+	if (!first_detection)
+	{
+		first_detection = lever;
+	}
 	
 	Feedback = input & feedback_pin;
 	Feedback = Feedback >> 4;
@@ -94,7 +102,8 @@ int main(void)
 	TIMSK0 = (1<<OCIE0A);				//Enable Interrupt at CTC value from OCR0A
 	
 	sei();
-	//Lese Blinkzyklen aus EEPROM 
+	
+	//read flash-cycles from memory 
 	cycles = eeprom_read_byte((uint8_t*)16);
 	
 		
@@ -117,7 +126,8 @@ int main(void)
 			}else if(counter - time_last_Feedback > time_out_Feedback){
 				stop_program();
 			}
-			if (!comfort && counter >= time_out)
+			//stop the program if nothing happened until time-out except both 
+			if (!comfort && counter >= time_out && lever != both)
 			{
 				stop_program();
 			}
@@ -130,7 +140,7 @@ int main(void)
 			case no_lever:				//no lever is set
 				
 				if(!comfort && counter >= time_in){
-					//check if the lever was released in time and was not hold too long
+					//check if the lever was released in time and was not hold too short
 					PORTB = state;			//Set output from the last known lever state
 					comfort = active;		//member the comfort-state
 					counter = 0;			//reset the counter for the blink-cycle
@@ -145,7 +155,6 @@ int main(void)
 					state = right;		//hold the lever-state	
 					both_counter = 0;
 				}
-				
 				
 				break;
 					
@@ -171,8 +180,9 @@ int main(void)
 						stop_program();
 					}
 					
-				}else{
-					//If both levers detected and no comfort-mode, setup cycles
+				}else if (first_detection == both)
+				{
+					//If both levers detected at the beginning and no comfort-mode, setup cycles
 					setup_cycles();
 				}
 				break;
