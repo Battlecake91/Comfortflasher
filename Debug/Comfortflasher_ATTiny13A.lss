@@ -1,0 +1,451 @@
+
+Comfortflasher_ATTiny13A.elf:     file format elf32-avr
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .text         00000234  00000000  00000000  00000094  2**1
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .data         00000000  00800060  00800060  000002ca  2**0
+                  CONTENTS, ALLOC, LOAD, DATA
+  2 .bss          00000016  00800060  00800060  000002c8  2**0
+                  ALLOC
+  3 .fuse         00000002  00820000  00820000  000002c8  2**0
+                  CONTENTS, ALLOC, LOAD, DATA
+  4 .comment      00000030  00000000  00000000  000002ca  2**0
+                  CONTENTS, READONLY
+  5 .note.gnu.avr.deviceinfo 0000003c  00000000  00000000  000002fc  2**2
+                  CONTENTS, READONLY
+  6 .debug_aranges 00000080  00000000  00000000  00000338  2**3
+                  CONTENTS, READONLY, DEBUGGING
+  7 .debug_info   0000071e  00000000  00000000  000003b8  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  8 .debug_abbrev 00000428  00000000  00000000  00000ad6  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  9 .debug_line   000004a7  00000000  00000000  00000efe  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 10 .debug_frame  00000078  00000000  00000000  000013a8  2**2
+                  CONTENTS, READONLY, DEBUGGING
+ 11 .debug_str    00000373  00000000  00000000  00001420  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 12 .debug_loc    00000074  00000000  00000000  00001793  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 13 .debug_ranges 00000030  00000000  00000000  00001807  2**0
+                  CONTENTS, READONLY, DEBUGGING
+
+Disassembly of section .text:
+
+00000000 <__vectors>:
+   0:	09 c0       	rjmp	.+18     	; 0x14 <__ctors_end>
+   2:	16 c0       	rjmp	.+44     	; 0x30 <__bad_interrupt>
+   4:	15 c0       	rjmp	.+42     	; 0x30 <__bad_interrupt>
+   6:	14 c0       	rjmp	.+40     	; 0x30 <__bad_interrupt>
+   8:	13 c0       	rjmp	.+38     	; 0x30 <__bad_interrupt>
+   a:	12 c0       	rjmp	.+36     	; 0x30 <__bad_interrupt>
+   c:	12 c0       	rjmp	.+36     	; 0x32 <__vector_6>
+   e:	10 c0       	rjmp	.+32     	; 0x30 <__bad_interrupt>
+  10:	0f c0       	rjmp	.+30     	; 0x30 <__bad_interrupt>
+  12:	0e c0       	rjmp	.+28     	; 0x30 <__bad_interrupt>
+
+00000014 <__ctors_end>:
+  14:	11 24       	eor	r1, r1
+  16:	1f be       	out	0x3f, r1	; 63
+  18:	cf e9       	ldi	r28, 0x9F	; 159
+  1a:	cd bf       	out	0x3d, r28	; 61
+
+0000001c <__do_clear_bss>:
+  1c:	20 e0       	ldi	r18, 0x00	; 0
+  1e:	a0 e6       	ldi	r26, 0x60	; 96
+  20:	b0 e0       	ldi	r27, 0x00	; 0
+  22:	01 c0       	rjmp	.+2      	; 0x26 <.do_clear_bss_start>
+
+00000024 <.do_clear_bss_loop>:
+  24:	1d 92       	st	X+, r1
+
+00000026 <.do_clear_bss_start>:
+  26:	a6 37       	cpi	r26, 0x76	; 118
+  28:	b2 07       	cpc	r27, r18
+  2a:	e1 f7       	brne	.-8      	; 0x24 <.do_clear_bss_loop>
+  2c:	45 d0       	rcall	.+138    	; 0xb8 <main>
+  2e:	00 c1       	rjmp	.+512    	; 0x230 <_exit>
+
+00000030 <__bad_interrupt>:
+  30:	e7 cf       	rjmp	.-50     	; 0x0 <__vectors>
+
+00000032 <__vector_6>:
+}
+
+void stop_program(){
+	
+	while(1){
+		PORTB = NO_LEVER;
+  32:	1f 92       	push	r1
+  34:	0f 92       	push	r0
+  36:	0f b6       	in	r0, 0x3f	; 63
+  38:	0f 92       	push	r0
+  3a:	11 24       	eor	r1, r1
+  3c:	8f 93       	push	r24
+  3e:	9f 93       	push	r25
+  40:	80 91 74 00 	lds	r24, 0x0074	; 0x800074 <counter>
+  44:	90 91 75 00 	lds	r25, 0x0075	; 0x800075 <counter+0x1>
+  48:	01 96       	adiw	r24, 0x01	; 1
+  4a:	90 93 75 00 	sts	0x0075, r25	; 0x800075 <counter+0x1>
+  4e:	80 93 74 00 	sts	0x0074, r24	; 0x800074 <counter>
+  52:	9f 91       	pop	r25
+  54:	8f 91       	pop	r24
+  56:	0f 90       	pop	r0
+  58:	0f be       	out	0x3f, r0	; 63
+  5a:	0f 90       	pop	r0
+  5c:	1f 90       	pop	r1
+  5e:	18 95       	reti
+
+00000060 <setup_cycles>:
+  60:	60 91 70 00 	lds	r22, 0x0070	; 0x800070 <feedback_count>
+  64:	8d ef       	ldi	r24, 0xFD	; 253
+  66:	86 0f       	add	r24, r22
+  68:	87 30       	cpi	r24, 0x07	; 7
+  6a:	18 f4       	brcc	.+6      	; 0x72 <setup_cycles+0x12>
+  6c:	80 e1       	ldi	r24, 0x10	; 16
+  6e:	90 e0       	ldi	r25, 0x00	; 0
+  70:	ce d0       	rcall	.+412    	; 0x20e <eeprom_update_byte>
+  72:	08 95       	ret
+
+00000074 <get_inputs>:
+
+void get_inputs(){
+	
+	//Writing input in variable
+	//and shifting bits to the right
+	uint8_t input = PINB;
+  74:	96 b3       	in	r25, 0x16	; 22
+	
+	//mask out the lever-bits with fixed variables	
+	lever = input & LEVER_MASK;
+	lever = lever >> 2;
+  76:	89 2f       	mov	r24, r25
+  78:	8c 70       	andi	r24, 0x0C	; 12
+  7a:	86 95       	lsr	r24
+  7c:	86 95       	lsr	r24
+  7e:	80 93 73 00 	sts	0x0073, r24	; 0x800073 <lever>
+	
+	if (!first_detection)
+  82:	20 91 62 00 	lds	r18, 0x0062	; 0x800062 <first_detection>
+  86:	21 11       	cpse	r18, r1
+  88:	12 c0       	rjmp	.+36     	; 0xae <__stack+0xf>
+	{
+		first_detection = lever;
+  8a:	80 93 62 00 	sts	0x0062, r24	; 0x800062 <first_detection>
+		
+		//If the first-detection is not both, set the state for the outputs from the first-detection
+		if (first_detection != BOTH)
+  8e:	83 30       	cpi	r24, 0x03	; 3
+  90:	59 f0       	breq	.+22     	; 0xa8 <__stack+0x9>
+		{
+			state = first_detection;	//Set the lever-state
+  92:	80 93 6f 00 	sts	0x006F, r24	; 0x80006f <state>
+			time_first_detection = counter;
+  96:	20 91 74 00 	lds	r18, 0x0074	; 0x800074 <counter>
+  9a:	30 91 75 00 	lds	r19, 0x0075	; 0x800075 <counter+0x1>
+  9e:	30 93 64 00 	sts	0x0064, r19	; 0x800064 <time_first_detection+0x1>
+  a2:	20 93 63 00 	sts	0x0063, r18	; 0x800063 <time_first_detection>
+  a6:	03 c0       	rjmp	.+6      	; 0xae <__stack+0xf>
+		}else
+		{
+			comfort = DISABLED;			//disabling the comfort-mode 
+  a8:	82 e0       	ldi	r24, 0x02	; 2
+  aa:	80 93 6e 00 	sts	0x006E, r24	; 0x80006e <comfort>
+		}
+	}
+	feedback = input & FEEDBACK_PIN;
+	feedback = feedback >> 4;
+  ae:	92 95       	swap	r25
+  b0:	91 70       	andi	r25, 0x01	; 1
+  b2:	90 93 72 00 	sts	0x0072, r25	; 0x800072 <feedback>
+  b6:	08 95       	ret
+
+000000b8 <main>:
+}
+
+int main(void)
+{
+ 
+    DDRB = 0x03;						//PB0 and PB1 as output
+  b8:	83 e0       	ldi	r24, 0x03	; 3
+  ba:	87 bb       	out	0x17, r24	; 23
+	
+	TCCR0A = (1<<WGM01);				//Set Mode to CTC mode
+  bc:	92 e0       	ldi	r25, 0x02	; 2
+  be:	9f bd       	out	0x2f, r25	; 47
+	TCCR0B = (1<<CS01) | (1<<CS00);		//Set Prescaler to 64
+  c0:	83 bf       	out	0x33, r24	; 51
+	
+	OCR0A  = 17;						//Set CTC value (17) for 1kHz rate, 1ms period time
+  c2:	81 e1       	ldi	r24, 0x11	; 17
+  c4:	86 bf       	out	0x36, r24	; 54
+	
+	TIMSK0 = (1<<OCIE0A);				//Enable Interrupt at CTC value from OCR0A
+  c6:	84 e0       	ldi	r24, 0x04	; 4
+  c8:	89 bf       	out	0x39, r24	; 57
+	
+	sei();
+  ca:	78 94       	sei
+	
+	//read flash-cycles from memory 
+	cycles = eeprom_read_byte((uint8_t*)16);
+  cc:	80 e1       	ldi	r24, 0x10	; 16
+  ce:	90 e0       	ldi	r25, 0x00	; 0
+  d0:	97 d0       	rcall	.+302    	; 0x200 <eeprom_read_byte>
+  d2:	80 93 6d 00 	sts	0x006D, r24	; 0x80006d <cycles>
+			}
+			
+			//disable the comfort-mode if there is no comfort-trigger within timeout detected 
+			if (comfort == INACTIVE && time >= TIMEOUT_COMFORT)
+			{
+				comfort = DISABLED;				//disable comfort mode because the time for comfort was to high
+  d6:	02 e0       	ldi	r16, 0x02	; 2
+			
+			//check if the lever was released in time and was not hold too short
+			if (!comfort && hold_time >= MIN_TIME)
+			{
+				PORTB = state;					//Set output-state from the first-detection
+				comfort = ACTIVE;				//member the comfort-state
+  d8:	11 e0       	ldi	r17, 0x01	; 1
+	cycles = eeprom_read_byte((uint8_t*)16);
+	
+	while (1) 
+    {
+
+		get_inputs();
+  da:	cc df       	rcall	.-104    	; 0x74 <get_inputs>
+		
+		uint16_t time = counter;
+  dc:	c0 91 74 00 	lds	r28, 0x0074	; 0x800074 <counter>
+  e0:	d0 91 75 00 	lds	r29, 0x0075	; 0x800075 <counter+0x1>
+		
+		//Anti-bounce: only check after 2ms if feedback signal has changed
+		if (counter - counter_last_check >= 2)
+  e4:	80 91 74 00 	lds	r24, 0x0074	; 0x800074 <counter>
+  e8:	90 91 75 00 	lds	r25, 0x0075	; 0x800075 <counter+0x1>
+  ec:	20 91 6b 00 	lds	r18, 0x006B	; 0x80006b <counter_last_check>
+  f0:	30 91 6c 00 	lds	r19, 0x006C	; 0x80006c <counter_last_check+0x1>
+  f4:	82 1b       	sub	r24, r18
+  f6:	93 0b       	sbc	r25, r19
+  f8:	02 97       	sbiw	r24, 0x02	; 2
+  fa:	08 f4       	brcc	.+2      	; 0xfe <main+0x46>
+  fc:	55 c0       	rjmp	.+170    	; 0x1a8 <main+0xf0>
+		{
+			//check if the signal has a falling edge
+			if (feedback != feedback_last && !feedback)
+  fe:	80 91 72 00 	lds	r24, 0x0072	; 0x800072 <feedback>
+ 102:	90 91 71 00 	lds	r25, 0x0071	; 0x800071 <feedback_last>
+ 106:	89 17       	cp	r24, r25
+ 108:	61 f0       	breq	.+24     	; 0x122 <main+0x6a>
+ 10a:	81 11       	cpse	r24, r1
+ 10c:	0a c0       	rjmp	.+20     	; 0x122 <main+0x6a>
+			{
+				feedback_count++;				//increment the counter if a falling edge was detected
+ 10e:	80 91 70 00 	lds	r24, 0x0070	; 0x800070 <feedback_count>
+ 112:	8f 5f       	subi	r24, 0xFF	; 255
+ 114:	80 93 70 00 	sts	0x0070, r24	; 0x800070 <feedback_count>
+				time_last_feedback = time;		//save the time the last feedback was detected
+ 118:	d0 93 68 00 	sts	0x0068, r29	; 0x800068 <time_last_feedback+0x1>
+ 11c:	c0 93 67 00 	sts	0x0067, r28	; 0x800067 <time_last_feedback>
+ 120:	0d c0       	rjmp	.+26     	; 0x13c <main+0x84>
+			}
+			
+			//Timeout for Feedback. If no feedback is detected for the parametrized time stop the function
+			else if (time - time_last_feedback >= TIMEOUT_FEEDBACK)
+ 122:	80 91 67 00 	lds	r24, 0x0067	; 0x800067 <time_last_feedback>
+ 126:	90 91 68 00 	lds	r25, 0x0068	; 0x800068 <time_last_feedback+0x1>
+ 12a:	9e 01       	movw	r18, r28
+ 12c:	28 1b       	sub	r18, r24
+ 12e:	39 0b       	sbc	r19, r25
+ 130:	c9 01       	movw	r24, r18
+ 132:	88 3e       	cpi	r24, 0xE8	; 232
+ 134:	93 40       	sbci	r25, 0x03	; 3
+ 136:	10 f0       	brcs	.+4      	; 0x13c <main+0x84>
+}
+
+void stop_program(){
+	
+	while(1){
+		PORTB = NO_LEVER;
+ 138:	18 ba       	out	0x18, r1	; 24
+ 13a:	fe cf       	rjmp	.-4      	; 0x138 <main+0x80>
+			{
+				stop_program();
+			}
+			
+			//disable the comfort-mode if there is no comfort-trigger within timeout detected 
+			if (comfort == INACTIVE && time >= TIMEOUT_COMFORT)
+ 13c:	80 91 6e 00 	lds	r24, 0x006E	; 0x80006e <comfort>
+ 140:	81 11       	cpse	r24, r1
+ 142:	07 c0       	rjmp	.+14     	; 0x152 <main+0x9a>
+ 144:	c4 3f       	cpi	r28, 0xF4	; 244
+ 146:	81 e0       	ldi	r24, 0x01	; 1
+ 148:	d8 07       	cpc	r29, r24
+ 14a:	08 f1       	brcs	.+66     	; 0x18e <main+0xd6>
+			{
+				comfort = DISABLED;				//disable comfort mode because the time for comfort was to high
+ 14c:	00 93 6e 00 	sts	0x006E, r16	; 0x80006e <comfort>
+ 150:	1e c0       	rjmp	.+60     	; 0x18e <main+0xd6>
+			}
+			
+			if (comfort == ACTIVE)
+ 152:	81 30       	cpi	r24, 0x01	; 1
+ 154:	e1 f4       	brne	.+56     	; 0x18e <main+0xd6>
+			{
+				//Increment the both_counter twice for 2ms each run through this function
+				if (lever == BOTH)
+ 156:	80 91 73 00 	lds	r24, 0x0073	; 0x800073 <lever>
+ 15a:	83 30       	cpi	r24, 0x03	; 3
+ 15c:	61 f4       	brne	.+24     	; 0x176 <main+0xbe>
+				{
+					 both_counter = both_counter + 2;
+ 15e:	80 91 69 00 	lds	r24, 0x0069	; 0x800069 <both_counter>
+ 162:	90 91 6a 00 	lds	r25, 0x006A	; 0x80006a <both_counter+0x1>
+ 166:	02 96       	adiw	r24, 0x02	; 2
+ 168:	90 93 6a 00 	sts	0x006A, r25	; 0x80006a <both_counter+0x1>
+ 16c:	80 93 69 00 	sts	0x0069, r24	; 0x800069 <both_counter>
+					//reset the both_counter if there is only one or none lever
+					both_counter = 0;
+				}
+				
+				//if the both_counter or the cycles reach the limit/setup value
+				if (both_counter >= TIME_BOTH || feedback_count >= cycles)
+ 170:	c2 97       	sbiw	r24, 0x32	; 50
+ 172:	28 f0       	brcs	.+10     	; 0x17e <main+0xc6>
+ 174:	0a c0       	rjmp	.+20     	; 0x18a <main+0xd2>
+					 both_counter = both_counter + 2;
+				}
+				else
+				{
+					//reset the both_counter if there is only one or none lever
+					both_counter = 0;
+ 176:	10 92 6a 00 	sts	0x006A, r1	; 0x80006a <both_counter+0x1>
+ 17a:	10 92 69 00 	sts	0x0069, r1	; 0x800069 <both_counter>
+				}
+				
+				//if the both_counter or the cycles reach the limit/setup value
+				if (both_counter >= TIME_BOTH || feedback_count >= cycles)
+ 17e:	90 91 70 00 	lds	r25, 0x0070	; 0x800070 <feedback_count>
+ 182:	80 91 6d 00 	lds	r24, 0x006D	; 0x80006d <cycles>
+ 186:	98 17       	cp	r25, r24
+ 188:	38 f0       	brcs	.+14     	; 0x198 <main+0xe0>
+}
+
+void stop_program(){
+	
+	while(1){
+		PORTB = NO_LEVER;
+ 18a:	18 ba       	out	0x18, r1	; 24
+ 18c:	fe cf       	rjmp	.-4      	; 0x18a <main+0xd2>
+					stop_program();
+				}
+				
+
+				
+			}else if (first_detection == BOTH)
+ 18e:	80 91 62 00 	lds	r24, 0x0062	; 0x800062 <first_detection>
+ 192:	83 30       	cpi	r24, 0x03	; 3
+ 194:	09 f4       	brne	.+2      	; 0x198 <main+0xe0>
+			{
+				//If both levers detected at the beginning and no comfort-mode, setup cycles
+				setup_cycles();
+ 196:	64 df       	rcall	.-312    	; 0x60 <setup_cycles>
+			}
+			
+			//save the last counter-state for the last feedback-edge
+			feedback_last = feedback;
+ 198:	80 91 72 00 	lds	r24, 0x0072	; 0x800072 <feedback>
+ 19c:	80 93 71 00 	sts	0x0071, r24	; 0x800071 <feedback_last>
+			counter_last_check = time;
+ 1a0:	d0 93 6c 00 	sts	0x006C, r29	; 0x80006c <counter_last_check+0x1>
+ 1a4:	c0 93 6b 00 	sts	0x006B, r28	; 0x80006b <counter_last_check>
+		}
+		
+		if (lever == NO_LEVER)					//no lever is set
+ 1a8:	80 91 73 00 	lds	r24, 0x0073	; 0x800073 <lever>
+ 1ac:	81 11       	cpse	r24, r1
+ 1ae:	95 cf       	rjmp	.-214    	; 0xda <main+0x22>
+		{			
+			//Check if the first detection was both levers and setup-mode or just release of the lever
+			if (!comfort && first_detection != BOTH)
+ 1b0:	80 91 6e 00 	lds	r24, 0x006E	; 0x80006e <comfort>
+ 1b4:	81 11       	cpse	r24, r1
+ 1b6:	91 cf       	rjmp	.-222    	; 0xda <main+0x22>
+ 1b8:	80 91 62 00 	lds	r24, 0x0062	; 0x800062 <first_detection>
+ 1bc:	83 30       	cpi	r24, 0x03	; 3
+ 1be:	c9 f0       	breq	.+50     	; 0x1f2 <main+0x13a>
+			{
+				//if no comfort-mode is set and the first detection was left or right, calculate the time the lever was hold for
+				hold_time = time - time_first_detection;
+ 1c0:	80 91 63 00 	lds	r24, 0x0063	; 0x800063 <time_first_detection>
+ 1c4:	90 91 64 00 	lds	r25, 0x0064	; 0x800064 <time_first_detection+0x1>
+ 1c8:	c8 1b       	sub	r28, r24
+ 1ca:	d9 0b       	sbc	r29, r25
+ 1cc:	d0 93 61 00 	sts	0x0061, r29	; 0x800061 <__DATA_REGION_ORIGIN__+0x1>
+ 1d0:	c0 93 60 00 	sts	0x0060, r28	; 0x800060 <__DATA_REGION_ORIGIN__>
+ 1d4:	0e c0       	rjmp	.+28     	; 0x1f2 <main+0x13a>
+			}
+			
+			//check if the lever was released in time and was not hold too short
+			if (!comfort && hold_time >= MIN_TIME)
+			{
+				PORTB = state;					//Set output-state from the first-detection
+ 1d6:	80 91 6f 00 	lds	r24, 0x006F	; 0x80006f <state>
+ 1da:	88 bb       	out	0x18, r24	; 24
+				comfort = ACTIVE;				//member the comfort-state
+ 1dc:	10 93 6e 00 	sts	0x006E, r17	; 0x80006e <comfort>
+				comfort_start_time = counter;	//save the comfort-start-time for feedback-timeout / mode without feedback
+ 1e0:	80 91 74 00 	lds	r24, 0x0074	; 0x800074 <counter>
+ 1e4:	90 91 75 00 	lds	r25, 0x0075	; 0x800075 <counter+0x1>
+ 1e8:	90 93 66 00 	sts	0x0066, r25	; 0x800066 <comfort_start_time+0x1>
+ 1ec:	80 93 65 00 	sts	0x0065, r24	; 0x800065 <comfort_start_time>
+ 1f0:	74 cf       	rjmp	.-280    	; 0xda <main+0x22>
+				//if no comfort-mode is set and the first detection was left or right, calculate the time the lever was hold for
+				hold_time = time - time_first_detection;
+			}
+			
+			//check if the lever was released in time and was not hold too short
+			if (!comfort && hold_time >= MIN_TIME)
+ 1f2:	80 91 60 00 	lds	r24, 0x0060	; 0x800060 <__DATA_REGION_ORIGIN__>
+ 1f6:	90 91 61 00 	lds	r25, 0x0061	; 0x800061 <__DATA_REGION_ORIGIN__+0x1>
+ 1fa:	c2 97       	sbiw	r24, 0x32	; 50
+ 1fc:	60 f7       	brcc	.-40     	; 0x1d6 <main+0x11e>
+ 1fe:	6d cf       	rjmp	.-294    	; 0xda <main+0x22>
+
+00000200 <eeprom_read_byte>:
+ 200:	e1 99       	sbic	0x1c, 1	; 28
+ 202:	fe cf       	rjmp	.-4      	; 0x200 <eeprom_read_byte>
+ 204:	8e bb       	out	0x1e, r24	; 30
+ 206:	e0 9a       	sbi	0x1c, 0	; 28
+ 208:	99 27       	eor	r25, r25
+ 20a:	8d b3       	in	r24, 0x1d	; 29
+ 20c:	08 95       	ret
+
+0000020e <eeprom_update_byte>:
+ 20e:	26 2f       	mov	r18, r22
+
+00000210 <eeprom_update_r18>:
+ 210:	e1 99       	sbic	0x1c, 1	; 28
+ 212:	fe cf       	rjmp	.-4      	; 0x210 <eeprom_update_r18>
+ 214:	8e bb       	out	0x1e, r24	; 30
+ 216:	e0 9a       	sbi	0x1c, 0	; 28
+ 218:	81 50       	subi	r24, 0x01	; 1
+ 21a:	0d b2       	in	r0, 0x1d	; 29
+ 21c:	02 16       	cp	r0, r18
+ 21e:	39 f0       	breq	.+14     	; 0x22e <eeprom_update_r18+0x1e>
+ 220:	1c ba       	out	0x1c, r1	; 28
+ 222:	2d bb       	out	0x1d, r18	; 29
+ 224:	0f b6       	in	r0, 0x3f	; 63
+ 226:	f8 94       	cli
+ 228:	e2 9a       	sbi	0x1c, 2	; 28
+ 22a:	e1 9a       	sbi	0x1c, 1	; 28
+ 22c:	0f be       	out	0x3f, r0	; 63
+ 22e:	08 95       	ret
+
+00000230 <_exit>:
+ 230:	f8 94       	cli
+
+00000232 <__stop_program>:
+ 232:	ff cf       	rjmp	.-2      	; 0x232 <__stop_program>
